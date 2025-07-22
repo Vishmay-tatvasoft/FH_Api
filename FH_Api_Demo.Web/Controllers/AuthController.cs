@@ -85,44 +85,61 @@ public class AuthController(IUserService userService, IJwtTokenService jwtTokenS
 
     #endregion
 
-    #region Validate Refresh Token
-    [HttpGet("validate-refresh-token")]
-    public async Task<IActionResult> ValidateToken()
+    #region refresh-token
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> Refresh()
     {
-        var refreshToken = Request.Cookies["DemoRefreshToken"]!;
-        if (refreshToken == null)
+        RefreshTokenVM refreshTokenVM = new()
         {
-            return Unauthorized(new ApiResponseVM<object>(401, "No token present", null));
-        }
-        bool rememberMe = Convert.ToBoolean(_jwtTokenService.GetClaimValue(refreshToken, "RememberMe"));
-
-        if (rememberMe)
+            RefreshToken = Request.Cookies["DemoRefreshToken"]!,
+            RememberMe = Convert.ToBoolean(_jwtTokenService.GetClaimValue(Request.Cookies["DemoRefreshToken"]!, "RememberMe")),
+        };
+        ApiResponseVM<object> response = await _userService.RefreshTokenAsync(refreshTokenVM);
+        if (response.StatusCode == 200)
         {
-            RefreshTokenVM refreshTokenVM = new()
-            {
-                RefreshToken = refreshToken,
-                RememberMe = rememberMe,
-            };
-            ApiResponseVM<object> response = await _userService.RefreshTokenAsync(refreshTokenVM);
-            if (response.StatusCode == 200)
-            {
-                TokenResponseVM tokenResponse = (TokenResponseVM)response.Data!;
-                DateTime expirationTime = tokenResponse.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddDays(7);
-                SetCookie("DemoAccessToken", tokenResponse.AccessToken, expirationTime);
-                SetCookie("DemoRefreshToken", tokenResponse.RefreshToken, expirationTime);
-                return Ok(response);
-            }
-            else if (response.StatusCode == 400)
-            {
-                return BadRequest(response);
-            }
-            else
-            {
-                return Unauthorized(response);
-            }
+            TokenResponseVM tokenResponse = (TokenResponseVM)response.Data!;
+            DateTime expirationTime = tokenResponse.RememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddDays(7);
+            SetCookie("DemoAccessToken", tokenResponse.AccessToken, expirationTime);
+            SetCookie("DemoRefreshToken", tokenResponse.RefreshToken, expirationTime);
+            return Ok(response);
+        }
+        else if (response.StatusCode == 400)
+        {
+            return BadRequest(response);
+        }
+        else
+        {
+            return Unauthorized(response);
+        }
+    }
+    #endregion
+
+    #region Validate Token
+    [HttpGet("validate")]
+    public IActionResult ValidateToken()
+    {
+        var accessToken = Request.Cookies["DemoAccessToken"];
+        var refreshToken = Request.Cookies["DemoRefreshToken"];
+        bool rememberMe = false;
+
+        var (isValid, isExpired, _) = _jwtTokenService.ValidateToken(accessToken!);
+
+        if ((bool)!isValid && isExpired == null)
+        {
+            RemoveCookie("DemoAccessToken");
+            RemoveCookie("DemoRefreshToken");
+        }
+        else
+        {
+            rememberMe = Convert.ToBoolean(_jwtTokenService.GetClaimValue(refreshToken, "RememberMe"));
         }
 
-        return Unauthorized(new ApiResponseVM<object>(401, "Invalid or expired refresh token", null));
+        return Ok(new
+        {
+            isValid = isValid,
+            isExpired = isExpired,
+            isRememberMe = rememberMe
+        });
     }
     #endregion
 
@@ -186,7 +203,7 @@ public class AuthController(IUserService userService, IJwtTokenService jwtTokenS
     {
         Response.Cookies.Append(name, value, new CookieOptions
         {
-            HttpOnly = true,
+            HttpOnly = false,
             Secure = true,
             SameSite = SameSiteMode.None,
             Expires = expiryTime
