@@ -77,6 +77,10 @@ public class UserService(IUserRepository userRepository, IJwtTokenService jwtTok
         await _userGR.SaveChangesAsync();
         #endregion
 
+        #region Sending OTP via Email
+        await _mailService.SendOtpEmail(signupVM.EmailAddress, signupVM.UserName, otp);
+        #endregion
+
         return new ApiResponseVM<object>(201, MessageHelper.USER_REGISTERED_SUCCESSFULLY, newUser);
     }
     #endregion
@@ -96,8 +100,12 @@ public class UserService(IUserRepository userRepository, IJwtTokenService jwtTok
         }
         else
         {
+
+            #region Generate access and refresh tokens
             string accessToken = _jwtTokenService.GenerateJwtToken(loginVM.UserName, user.UserId.ToString(), loginVM.RememberMe);
             string refreshToken = _jwtTokenService.GenerateRefreshTokenJwt(loginVM.UserName, user.UserId.ToString(), loginVM.RememberMe);
+            #endregion
+
             return new ApiResponseVM<object>(200, string.Concat(MessageHelper.LOGIN, MessageHelper.SUCCESSFULLY), new TokenResponseVM { UserName = loginVM.UserName, RememberMe = loginVM.RememberMe, AccessToken = accessToken, RefreshToken = refreshToken });
         }
     }
@@ -116,8 +124,11 @@ public class UserService(IUserRepository userRepository, IJwtTokenService jwtTok
             FhUser? user = await _userGR.GetRecordById(userID);
             if (user != null)
             {
+                #region Generate access and refresh tokens
                 string newAccessToken = _jwtTokenService.GenerateJwtToken(user.UserName!, user.UserId.ToString(), refreshTokenVM.RememberMe);
                 string newRefreshToken = _jwtTokenService.GenerateRefreshTokenJwt(user.UserName!, user.UserId.ToString(), refreshTokenVM.RememberMe);
+                #endregion
+                
                 return new ApiResponseVM<object>(200, MessageHelper.TOKEN_REFRESHED, new TokenResponseVM { UserName = user.UserName, RememberMe = refreshTokenVM.RememberMe, AccessToken = newAccessToken, RefreshToken = newRefreshToken });
             }
             return new ApiResponseVM<object>(401, MessageHelper.USER_NOT_EXIST, null);
