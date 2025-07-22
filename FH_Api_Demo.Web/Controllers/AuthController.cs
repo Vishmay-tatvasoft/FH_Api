@@ -86,7 +86,7 @@ public class AuthController(IUserService userService, IJwtTokenService jwtTokenS
     #endregion
 
     #region refresh-token
-    [HttpPost("refresh-token")]
+    [HttpGet("refresh-token")]
     public async Task<IActionResult> Refresh()
     {
         RefreshTokenVM refreshTokenVM = new()
@@ -131,7 +131,7 @@ public class AuthController(IUserService userService, IJwtTokenService jwtTokenS
         }
         else
         {
-            rememberMe = Convert.ToBoolean(_jwtTokenService.GetClaimValue(refreshToken, "RememberMe"));
+            rememberMe = Convert.ToBoolean(_jwtTokenService.GetClaimValue(refreshToken!, "RememberMe"));
         }
 
         return Ok(new
