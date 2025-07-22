@@ -3,6 +3,7 @@
     <ProjectReference Include="..\FH_Api_Demo.Repositories\FH_Api_Demo.Repositories.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Isopoh.Cryptography.Argon2" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
   </ItemGroup>
   <PropertyGroup>

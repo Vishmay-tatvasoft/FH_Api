@@ -8,6 +8,7 @@ public class DependencyInjection
 {
     public static void RegisterServices(IConfiguration configuration, IServiceCollection services, string connectionString)
     {
+        services.AddControllers();
         services.AddHttpClient();
 
         services.AddDbContext<TatvasoftFhContext>(options =>
