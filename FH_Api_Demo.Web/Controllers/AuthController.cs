@@ -172,6 +172,16 @@ public class AuthController(IUserService userService, IJwtTokenService jwtTokenS
     }
     #endregion
 
+    #region Logout
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        RemoveCookie("DemoAccessToken");
+        RemoveCookie("DemoRefreshToken");
+        return Ok(new ApiResponseVM<object>(200, "Logged out successfully", null));
+    }
+    #endregion
+
     private void SetCookie(string name, string value, DateTime expiryTime)
     {
         Response.Cookies.Append(name, value, new CookieOptions
