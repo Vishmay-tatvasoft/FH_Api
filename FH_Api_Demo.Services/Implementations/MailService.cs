@@ -38,7 +38,7 @@ public class MailService(IConfiguration config) : IMailService
 
     public async Task<string> GetEmailBodyAsync(string templateName)
     {
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "MailTemplate", templateName);
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Templates", "MailTemplates", templateName);
         return await File.ReadAllTextAsync(templatePath);
     }
 
