@@ -1,4 +1,6 @@
 using System.Reflection;
+using FH_Api_Demo.Repositories.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FH_Api_Demo.Web;
 
@@ -8,9 +10,9 @@ public class DependencyInjection
     {
         services.AddHttpClient();
 
-        // services.AddDbContext<TatvasoftFhContext>(options =>
-        //     options.UseNpgsql(connectionString)
-        // );
+        services.AddDbContext<TatvasoftFhContext>(options =>
+            options.UseNpgsql(connectionString)
+        );
         services.AddCors(options =>
         {
             options.AddPolicy("AllowAngular", policy =>
@@ -20,8 +22,8 @@ public class DependencyInjection
                     .AllowAnyMethod()
                     .AllowCredentials());
         });
-        RegisterImplementations(services, "ApiAuthentication.Repositories");
-        RegisterImplementations(services, "ApiAuthentication.Services");
+        RegisterImplementations(services, "FH_Api_Demo.Repositories");
+        RegisterImplementations(services, "FH_Api_Demo.Services");
     }
 
     private static void RegisterImplementations(
