@@ -1,4 +1,5 @@
 using FH_Api_Demo.Web;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +7,22 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
+
+//Invalid Model Handling
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+{
+    return new BadRequestObjectResult(new
+    {
+        status = 400,
+        message = "Invalid request body."
+    });
+};
+
+});
 
 #region DbContext Initialization , Services And Repositories Registration
 var connectionString = builder.Configuration.GetConnectionString("TatvasoftFhContext");
